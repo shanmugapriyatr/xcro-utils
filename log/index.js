@@ -1,6 +1,12 @@
 const pathNotToLog = ['healthCheck', 'webHealth', 'health'];
+const reqHeaderNotToLog = ['x-forwarded-for', 'dnt', 'authorization', 'access-control-allow-methods', 'content-type', 'access-control-allow-origin', 'accept', 'referer', 'accept-encoding', 'accept-language', 'cookie', 'connection'];
 
 var counter = 0;
+
+function deleteProps(obj, properties) {
+    for (let property of properties)
+        (property in obj) && (delete obj[property]);
+}
 
 function log() {
     return function (req, res, next) {
@@ -15,7 +21,10 @@ function log() {
             reqId = counter = 0;
         }
         logger.info(reqId + ' ' + req.ip + ' ' + req.method + ' ' + req.originalUrl);
-        logger.debug(reqId + ' ' + 'Request Headers - ' + JSON.stringify(req.headers));
+
+        let headers = req.headers ? JSON.parse(JSON.stringify(req.headers)) : {};
+        deleteProps(headers, reqHeaderNotToLog);
+        logger.debug(reqId + ' ' + 'Request Headers - ' + JSON.stringify(headers));
         if (req.body) {
             logger.debug(reqId + ' ' + 'Request Payload - ' + JSON.stringify(req.body));
         }
