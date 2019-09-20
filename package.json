@@ -1,0 +1,22 @@
+{
+    "name": "@appveen/xcro-utils",
+    "version": "1.0.0",
+    "description": "General utility function",
+    "main": "index.js",
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+      "type": "git",
+      "url": "git+https://github.com/appveen/xcro-utils.git"
+    },
+    "author": "Nirmal <nirmal@appveen.com>",
+    "license": "MIT",
+    "bugs": {
+      "url": "https://github.com/appveen/xcro-utils/issues"
+    },
+    "homepage": "https://github.com/appveen/xcro-utils#readme",
+    "dependencies": {
+      "log4js": "^4.0.0"
+    }
+  }
