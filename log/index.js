@@ -1,7 +1,32 @@
-const pathNotToLog = ['healthCheck', 'webHealth', 'health'];
-const reqHeaderNotToLog = ['x-forwarded-for', 'dnt', 'authorization', 'access-control-allow-methods', 'content-type', 'access-control-allow-origin', 'accept', 'referer', 'accept-encoding', 'accept-language', 'cookie', 'connection'];
+const pathNotToLog = process.env.LOG_UTIL_PATH_NOT_TO_LOG
+    ? process.env.LOG_UTIL_PATH_NOT_TO_LOG.split(',')
+    : ['healthCheck', 'webHealth', 'health'];
+
+const reqHeaderNotToLog = process.env.LOG_UTIL_HEADER_NOT_TO_LOG
+    ? process.env.LOG_UTIL_HEADER_NOT_TO_LOG.split(',')
+    : ['x-forwarded-for', 'dnt', 'authorization', 'access-control-allow-methods', 'content-type', 'access-control-allow-origin', 'accept', 'referer', 'accept-encoding', 'accept-language', 'cookie', 'connection'];
+
+const keysNotToLog = process.env.LOG_UTIL_KEYS_NOT_TO_LOG
+    ? process.env.LOG_UTIL_KEYS_NOT_TO_LOG.split(',')
+    : ['token', 'password'];
 
 var counter = 0;
+
+function omitKeys(ip, isJson) {
+    try {
+        if (isJson)
+            return JSON.stringify(ip, function (key, value) {
+                return keysNotToLog.includes(key) ? undefined : value;
+            });
+        else
+            return JSON.stringify(JSON.parse(ip, function (key, value) {
+                return keysNotToLog.includes(key) ? undefined : value;
+            }));
+    }
+    catch (e) {
+        return ip;
+    }
+}
 
 function deleteProps(obj, properties) {
     for (let property of properties)
@@ -26,7 +51,7 @@ function log() {
         deleteProps(headers, reqHeaderNotToLog);
         logger.debug(reqId + ' ' + 'Request Headers - ' + JSON.stringify(headers));
         if (req.body) {
-            logger.debug(reqId + ' ' + 'Request Payload - ' + JSON.stringify(req.body));
+            logger.debug(reqId + ' ' + 'Request Payload - ' + omitKeys(req.body, true));
         }
 
         // log response body
@@ -44,19 +69,18 @@ function log() {
             body = Buffer.concat(chunks).toString('utf8');
             oldEnd.apply(res, arguments);
         };
-        let start = new Date();
+
         res.on('finish', function () {
             if (pathNotToLog.includes(path)) {
                 next();
                 return;
             }
-            let end = new Date();
-            let diff = end - start;
             if (res && res.statusCode && res.statusCode != 200) {
-                logger.error(reqId + ' ' + 'Response Status Code - ' + res.statusCode + ' ' + JSON.stringify(body));
+                logger.error(reqId + ' ' + 'Response Status Code - ' + res.statusCode + ' ' + omitKeys(body));
             }
-            if (req.method && req.method.toLowerCase() != 'get') {
-                logger.debug(reqId + ' ' + 'Response payload - ' + JSON.stringify(body));
+            if (res && res.statusCode && res.statusCode == 200
+                && req.method && req.method.toLowerCase() != 'get') {
+                logger.debug(reqId + ' ' + 'Response payload - ' + omitKeys(body));
             }
             next();
         });
