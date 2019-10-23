@@ -24,7 +24,7 @@ function omitKeys(ip, isJson) {
             }));
     }
     catch (e) {
-        return ip;
+        return JSON.stringify(ip);
     }
 }
 
